@@ -1,0 +1,1212 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>AI News Comic — Real-Time Visual AI Digest</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans for crisp UI reading, Space Grotesk for comic punch, Material Symbols -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+
+  <!-- Tailwind CSS via Official CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: ['class', '[data-theme="dark"]'],
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              100: '#ffe4e6',
+              200: '#fecdd3',
+              300: '#fda4af',
+              400: '#fb7185',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              800: '#9f1239',
+              900: '#881337',
+            },
+            dark: {
+              bg: '#090d16',
+              card: '#111927',
+              sidebar: '#0d1522',
+              border: '#1f293d',
+              bubble: '#131e30',
+            }
+          },
+          boxShadow: {
+            'comic': '0 8px 30px rgba(225, 29, 72, 0.16)',
+            'comic-lg': '0 14px 40px rgba(225, 29, 72, 0.22)',
+            'glass': '0 4px 20px 0 rgba(0, 0, 0, 0.05)',
+            'glass-dark': '0 4px 24px 0 rgba(0, 0, 0, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom CSS variables for dynamic transitions & smooth theming */
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --sidebar-bg: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #e11d48;
+      --accent-hover: #be123c;
+      --agent-bubble-bg: #ffffff;
+    }
+
+    [data-theme="dark"] {
+      --bg: #090d16;
+      --card-bg: #111927;
+      --sidebar-bg: #0d1522;
+      --border: #1f293d;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #fb7185;
+      --accent-hover: #f43f5e;
+      --agent-bubble-bg: #131e30;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text-main);
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+
+    /* Accessibility Focus Rings */
+    :focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.45);
+    }
+
+    /* Skip link for keyboard users */
+    .skip-link {
+      position: absolute;
+      top: -60px;
+      left: 1rem;
+      background: #e11d48;
+      color: #ffffff;
+      padding: 0.6rem 1.2rem;
+      border-radius: 0.5rem;
+      font-weight: 700;
+      z-index: 1000;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      transition: top 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .skip-link:focus {
+      top: 1rem;
+    }
+
+    /* Custom thin scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    [data-theme="dark"] ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #e11d48;
+    }
+
+    /* Carousel CSS snapping & GPU acceleration */
+    .carousel-scroller {
+      display: flex;
+      flex-direction: row;
+      gap: 1.25rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      contain: layout paint;
+      will-change: scroll-position;
+      scrollbar-width: thin;
+      scrollbar-color: var(--accent) transparent;
+      padding: 0.5rem 0.25rem 1rem;
+    }
+
+    /* Constrained height so full comic slide is 100% visible in viewport */
+    .carousel-card {
+      flex: 0 0 min(430px, 86%);
+      max-height: min(530px, calc(100vh - 220px));
+      scroll-snap-align: center;
+      scroll-snap-stop: always;
+      display: flex;
+      flex-direction: column;
+      transform: translateZ(0);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+    }
+    .carousel-card:hover {
+      transform: translateY(-2px);
+    }
+
+    /* Image zoom cursor */
+    .slide-media-box {
+      cursor: zoom-in;
+    }
+
+    /* Animations */
+    @keyframes pulseDot {
+      0%, 80%, 100% { transform: scale(0.65); opacity: 0.35; }
+      40% { transform: scale(1.15); opacity: 1; }
+    }
+    .typing-dot {
+      animation: pulseDot 1.3s infinite ease-in-out;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    /* Lightbox Modal Animation */
+    .lightbox-overlay {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .lightbox-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Markdown styling inside bubbles */
+    .prose-bubble h1, .prose-bubble h2, .prose-bubble h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 0.4rem;
+      margin-bottom: 0.4rem;
+    }
+    .prose-bubble h1 { font-size: 1.15rem; }
+    .prose-bubble h2 { font-size: 1.05rem; }
+    .prose-bubble h3 { font-size: 0.95rem; }
+    .prose-bubble p { margin-top: 0.3rem; margin-bottom: 0.3rem; }
+    .prose-bubble blockquote {
+      border-left: 3px solid #e11d48;
+      padding-left: 0.75rem;
+      font-style: italic;
+      color: var(--text-muted);
+      margin: 0.4rem 0;
+    }
+    .prose-bubble strong {
+      color: var(--text-main);
+      font-weight: 700;
+    }
+    .prose-bubble a {
+      color: #e11d48;
+      text-decoration: underline;
+      font-weight: 600;
+    }
+    .prose-bubble ul {
+      list-style-type: disc;
+      padding-left: 1.25rem;
+      margin: 0.4rem 0;
+    }
+    .prose-bubble li {
+      margin: 0.2rem 0;
+    }
+  </style>
+</head>
+
+<body class="h-screen h-[100dvh] flex flex-col overflow-hidden font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- Accessible Skip Link -->
+  <a href="#chatMain" class="skip-link">Skip to chat content [Alt+S]</a>
+
+  <!-- ========================================================================
+       TOP NAVIGATION BAR (Glassmorphism & Accessible Controls)
+       ======================================================================== -->
+  <header role="banner" class="w-full bg-white/90 dark:bg-dark-sidebar/90 backdrop-blur-md border-b border-slate-200 dark:border-dark-border px-4 py-3 flex items-center justify-between z-30 flex-shrink-0 transition-colors">
+    <div class="flex items-center gap-3">
+      <!-- Mobile Sidebar Drawer Toggle -->
+      <button id="sidebarToggle" class="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500" aria-label="Toggle capabilities and prompts sidebar" title="Toggle Capabilities Panel">
+        <span class="material-symbols-outlined text-2xl">menu</span>
+      </button>
+
+      <!-- App Brand Logo & Title -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center text-white shadow-md shadow-brand-500/20 text-lg">
+          🤖
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display font-bold text-lg leading-tight tracking-tight text-slate-900 dark:text-white">
+              AI News Comic
+            </h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-50 text-brand-600 border border-brand-200 dark:bg-brand-950/40 dark:text-brand-400 dark:border-brand-900">
+              Daily Digest
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+            Curated releases • Multi-panel visual stories • Vertex AI Memory
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Header Tools -->
+    <div class="flex items-center gap-2">
+      <!-- Agent Status Indicator -->
+      <div class="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800" role="status" aria-label="Agent Engine backend is online">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span>A2A Live</span>
+      </div>
+
+      <!-- New Chat Button -->
+      <button id="newChatBtn" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500" aria-label="Start new session" title="Start new session (Alt+N)">
+        <span class="material-symbols-outlined text-base">refresh</span>
+        <span class="hidden sm:inline">New Chat</span>
+      </button>
+
+      <!-- Theme Switcher Button -->
+      <button id="themeToggle" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500" aria-label="Switch between light and dark theme" title="Toggle Light/Dark Theme (Alt+T)">
+        <span id="themeIcon" class="material-symbols-outlined text-xl">dark_mode</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       2-COLUMN APPLICATION LAYOUT
+       ======================================================================== -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- Mobile Sidebar Backdrop Overlay -->
+    <div id="sidebarBackdrop" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity" aria-hidden="true"></div>
+
+    <!-- ======================================================================
+         LEFT COLUMN: Always Visible on Desktop (Capabilities, Prompts & Specs)
+         ====================================================================== -->
+    <aside id="sidebar" role="complementary" aria-label="Capabilities and Prompts Sidebar"
+      class="fixed inset-y-0 left-0 z-50 w-80 lg:w-[330px] lg:static lg:z-auto bg-white dark:bg-dark-sidebar border-r border-slate-200 dark:border-dark-border flex flex-col h-full transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none">
+      
+      <!-- Drawer Header (Mobile Only) -->
+      <div class="p-4 border-b border-slate-200 dark:border-dark-border flex items-center justify-between lg:hidden">
+        <span class="font-display font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚡</span> Capabilities & Prompts
+        </span>
+        <button id="sidebarCloseBtn" class="p-1 rounded-lg text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white" aria-label="Close panel">
+          <span class="material-symbols-outlined text-xl">close</span>
+        </button>
+      </div>
+
+      <!-- Scrollable Sidebar Content -->
+      <div class="flex-1 overflow-y-auto p-4 space-y-6">
+
+        <!-- 1. Capabilities Section -->
+        <section aria-labelledby="cap-title">
+          <h2 id="cap-title" class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-brand-500">auto_awesome</span>
+            Agent Superpowers
+          </h2>
+
+          <div class="space-y-2.5">
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-dark-card border border-slate-200/80 dark:border-dark-border flex gap-3 hover:border-brand-200 dark:hover:border-brand-900 transition-colors">
+              <div class="w-8 h-8 rounded-xl bg-brand-100 dark:bg-brand-950/60 text-brand-600 dark:text-brand-400 flex items-center justify-center flex-shrink-0 text-base">
+                🎨
+              </div>
+              <div class="text-xs">
+                <strong class="block font-semibold text-slate-900 dark:text-slate-100">Default Comic Carousel</strong>
+                <p class="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                  Transforms AI news into multi-panel comic stories with graphic ink art.
+                </p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-dark-card border border-slate-200/80 dark:border-dark-border flex gap-3 hover:border-brand-200 dark:hover:border-brand-900 transition-colors">
+              <div class="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center flex-shrink-0 text-base">
+                🚀
+              </div>
+              <div class="text-xs">
+                <strong class="block font-semibold text-slate-900 dark:text-slate-100">Tool Launches & Creators</strong>
+                <p class="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                  Dedicated index panel crediting tool authors, labs, and GitHub repos.
+                </p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-dark-card border border-slate-200/80 dark:border-dark-border flex gap-3 hover:border-brand-200 dark:hover:border-brand-900 transition-colors">
+              <div class="w-8 h-8 rounded-xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center flex-shrink-0 text-base">
+                📝
+              </div>
+              <div class="text-xs">
+                <strong class="block font-semibold text-slate-900 dark:text-slate-100">Executive Text Summaries</strong>
+                <p class="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                  Request a "summary" to skip panels and receive bulleted recaps.
+                </p>
+              </div>
+            </div>
+
+            <div class="p-3 rounded-2xl bg-slate-50 dark:bg-dark-card border border-slate-200/80 dark:border-dark-border flex gap-3 hover:border-brand-200 dark:hover:border-brand-900 transition-colors">
+              <div class="w-8 h-8 rounded-xl bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center flex-shrink-0 text-base">
+                🧠
+              </div>
+              <div class="text-xs">
+                <strong class="block font-semibold text-slate-900 dark:text-slate-100">Vertex AI Memory Bank</strong>
+                <p class="text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
+                  Persists favorite topics, reading history, and dietary/allergy safety profiles.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 2. One-Click Interactive Prompts -->
+        <section aria-labelledby="prompts-title">
+          <h2 id="prompts-title" class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-brand-500">touch_app</span>
+            One-Click Prompts
+          </h2>
+
+          <div class="space-y-2">
+            <button class="prompt-chip w-full text-left p-3 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:border-brand-500 dark:hover:border-brand-500 shadow-sm hover:shadow-md transition-all group focus-visible:ring-2 focus-visible:ring-brand-500"
+              data-prompt="Generate today's 5-slide AI comic carousel with all releases & creators">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg group-hover:scale-110 transition-transform">🔥</span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                    5-Slide Comic Carousel
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Visual stories + creator showcase
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+              </div>
+            </button>
+
+            <button class="prompt-chip w-full text-left p-3 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:border-brand-500 dark:hover:border-brand-500 shadow-sm hover:shadow-md transition-all group focus-visible:ring-2 focus-visible:ring-brand-500"
+              data-prompt="What new AI tools and models dropped today and who launched them?">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg group-hover:scale-110 transition-transform">⚡</span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                    Top Tools & Creators
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Catalog of fresh releases
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+              </div>
+            </button>
+
+            <button class="prompt-chip w-full text-left p-3 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:border-brand-500 dark:hover:border-brand-500 shadow-sm hover:shadow-md transition-all group focus-visible:ring-2 focus-visible:ring-brand-500"
+              data-prompt="Give me a quick plain text summary of today's biggest AI news without comics">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg group-hover:scale-110 transition-transform">📋</span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                    Executive Text Summary
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Fast text recap without panels
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+              </div>
+            </button>
+
+            <button class="prompt-chip w-full text-left p-3 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border hover:border-brand-500 dark:hover:border-brand-500 shadow-sm hover:shadow-md transition-all group focus-visible:ring-2 focus-visible:ring-brand-500"
+              data-prompt="What are the top open source AI projects trending today?">
+              <div class="flex items-center gap-2.5">
+                <span class="text-lg group-hover:scale-110 transition-transform">🤖</span>
+                <div class="min-w-0 flex-1">
+                  <div class="text-xs font-bold text-slate-900 dark:text-slate-100 truncate group-hover:text-brand-600 dark:group-hover:text-brand-400">
+                    Open-Source Highlights
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">
+                    Trending GitHub weights & repos
+                  </div>
+                </div>
+                <span class="material-symbols-outlined text-slate-400 text-sm opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+              </div>
+            </button>
+          </div>
+        </section>
+
+        <!-- 3. System Architecture Badges -->
+        <section aria-labelledby="arch-title">
+          <h2 id="arch-title" class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-sm text-brand-500">layers</span>
+            Cloud Architecture
+          </h2>
+
+          <div class="flex flex-wrap gap-1.5">
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
+              Gemini 2.5 Flash
+            </span>
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
+              Agent Engine (A2A)
+            </span>
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
+              Memory Bank
+            </span>
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
+              Firestore DB
+            </span>
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
+              Cloud Storage CDN
+            </span>
+            <span class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-dark-border">
+              Chrome CSS Carousels
+            </span>
+          </div>
+        </section>
+
+        <!-- 4. Keyboard Shortcuts Footer -->
+        <div class="pt-2 border-t border-slate-200 dark:border-dark-border text-[11px] text-slate-400 dark:text-slate-500 space-y-1">
+          <div class="font-semibold text-slate-500 dark:text-slate-400">Keyboard Shortcuts:</div>
+          <div class="flex justify-between"><span>New Session</span><kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-mono">Alt + N</kbd></div>
+          <div class="flex justify-between"><span>Toggle Theme</span><kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-mono">Alt + T</kbd></div>
+          <div class="flex justify-between"><span>Navigate Slide</span><kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-mono">← / →</kbd></div>
+          <div class="flex justify-between"><span>Close Lightbox</span><kbd class="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 font-mono">Esc</kbd></div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- ======================================================================
+         RIGHT COLUMN: Main Chat Stage & Multi-Panel Comic Carousel Viewer
+         ====================================================================== -->
+    <main id="chatMain" role="main" class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50/70 dark:bg-dark-bg transition-colors">
+      
+      <!-- Live Message Stream Log -->
+      <div id="log" role="log" aria-live="polite" aria-relevant="additions text"
+        class="flex-1 overflow-y-auto px-3 sm:px-6 py-6 space-y-6 focus-visible:ring-1 focus-visible:ring-brand-500">
+        
+        <!-- Welcome Dialogue Message -->
+        <div class="flex flex-col items-start gap-1 max-w-4xl mx-auto w-full">
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
+            <span class="text-brand-600 dark:text-brand-400 font-bold">🤖 AI News Comic</span>
+            <span class="px-1.5 py-0.2 rounded bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 text-[10px] font-bold">Issue #1</span>
+            <span>•</span>
+            <span>Today</span>
+          </div>
+          <div class="bg-white dark:bg-dark-bubble border border-slate-200/90 dark:border-dark-border shadow-sm rounded-2xl rounded-tl-sm p-4 sm:p-5 text-sm leading-relaxed text-slate-800 dark:text-slate-100 prose-bubble">
+            <p class="font-display font-bold text-base text-slate-900 dark:text-white mb-1">
+              Welcome to AI News Comic! 👋
+            </p>
+            <p>
+              I track real-time AI launches, research papers, and open-source models, turning them into <strong>Instagram-style multi-panel comic carousels</strong>.
+            </p>
+            <p class="mt-2 text-slate-600 dark:text-slate-300">
+              ⚡ <em>Click any prompt on the left or type your query below to produce today's issue!</em>
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Footer Input Form Bar -->
+      <div class="p-3 sm:p-4 bg-white/90 dark:bg-dark-sidebar/90 backdrop-blur-md border-t border-slate-200 dark:border-dark-border z-20 flex-shrink-0">
+        <div class="max-w-4xl mx-auto w-full">
+          <form id="form" role="search" aria-label="Ask AI News Comic" class="flex items-center gap-2 sm:gap-3">
+            <div class="relative flex-1">
+              <span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xl pointer-events-none">
+                auto_stories
+              </span>
+              <input id="input" type="text"
+                placeholder="Ask for today's AI news or tool drops… (defaults to comic carousel)"
+                autocomplete="off" autofocus
+                aria-label="Message prompt input"
+                class="w-full pl-11 pr-4 py-3 rounded-2xl text-sm bg-slate-100/90 dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:bg-white dark:focus:bg-dark-bubble focus:border-brand-500 dark:focus:border-brand-500 focus-visible:ring-2 focus-visible:ring-brand-500/20 transition-all">
+            </div>
+
+            <button type="submit" id="submitBtn" aria-label="Send message"
+              class="px-5 py-3 rounded-2xl bg-gradient-to-r from-brand-600 to-rose-500 hover:from-brand-700 hover:to-rose-600 text-white font-semibold text-sm shadow-md shadow-brand-500/25 hover:shadow-brand-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-1.5 flex-shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2">
+              <span class="hidden sm:inline">Send</span>
+              <span class="material-symbols-outlined text-lg">send</span>
+            </button>
+          </form>
+          <div class="flex items-center justify-between mt-1.5 px-2 text-[11px] text-slate-400 dark:text-slate-500">
+            <span>Tip: Ask for a "summary" to toggle plain text mode</span>
+            <span class="hidden sm:inline font-mono">Enter to Send</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ========================================================================
+       ACCESSIBLE FULL-SCREEN LIGHTBOX MODAL
+       ======================================================================== -->
+  <div id="lightboxModal" class="lightbox-overlay fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-8" role="dialog" aria-label="Enlarged Comic Artwork" aria-modal="true">
+    <button id="lightboxClose" class="absolute top-4 right-4 sm:top-6 sm:right-6 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors focus-visible:ring-2 focus-visible:ring-white" aria-label="Close Lightbox (Escape)">
+      <span class="material-symbols-outlined text-2xl sm:text-3xl">close</span>
+    </button>
+    <div class="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+      <img id="lightboxImg" src="" alt="Enlarged Comic Artwork" class="max-w-full max-h-[82vh] object-contain rounded-2xl shadow-2xl border border-white/10">
+      <div id="lightboxCaption" class="mt-3 text-xs sm:text-sm font-semibold text-white/90 text-center tracking-wide"></div>
+    </div>
+  </div>
+
+  <!-- ========================================================================
+       APPLICATION LOGIC
+       ======================================================================== -->
+  <script>
+    const log = document.getElementById("log");
+    const form = document.getElementById("form");
+    const input = document.getElementById("input");
+    const themeToggle = document.getElementById("themeToggle");
+    const themeIcon = document.getElementById("themeIcon");
+    const newChatBtn = document.getElementById("newChatBtn");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
+    const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+    const lightboxModal = document.getElementById("lightboxModal");
+    const lightboxImg = document.getElementById("lightboxImg");
+    const lightboxCaption = document.getElementById("lightboxCaption");
+    const lightboxClose = document.getElementById("lightboxClose");
+
+    // Persistent User Context
+    let userId = "web-user-" + Math.random().toString(36).slice(2, 8);
+
+    /* ------------------------------------------------------------------------
+     * Mobile Sidebar Drawer Controls
+     * ---------------------------------------------------------------------- */
+    function toggleSidebar(open) {
+      if (open) {
+        sidebar.classList.remove("-translate-x-full");
+        sidebarBackdrop.classList.remove("hidden");
+        sidebarCloseBtn.focus();
+      } else {
+        sidebar.classList.add("-translate-x-full");
+        sidebarBackdrop.classList.add("hidden");
+        sidebarToggle.focus();
+      }
+    }
+
+    sidebarToggle?.addEventListener("click", () => toggleSidebar(true));
+    sidebarCloseBtn?.addEventListener("click", () => toggleSidebar(false));
+    sidebarBackdrop?.addEventListener("click", () => toggleSidebar(false));
+
+    /* ------------------------------------------------------------------------
+     * Theme Toggle (Light / Noir Dark) with Accessible State
+     * ---------------------------------------------------------------------- */
+    function setTheme(theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("ai_comic_theme", theme);
+      if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+        themeIcon.textContent = "light_mode";
+        themeToggle.setAttribute("aria-label", "Switch to light theme");
+      } else {
+        document.documentElement.classList.remove("dark");
+        themeIcon.textContent = "dark_mode";
+        themeToggle.setAttribute("aria-label", "Switch to dark theme");
+      }
+    }
+
+    const savedTheme = localStorage.getItem("ai_comic_theme") || "light";
+    setTheme(savedTheme);
+
+    themeToggle?.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      setTheme(current === "dark" ? "light" : "dark");
+    });
+
+    /* ------------------------------------------------------------------------
+     * Global Keyboard Shortcuts
+     * ---------------------------------------------------------------------- */
+    window.addEventListener("keydown", (e) => {
+      // Alt + N: New Chat
+      if (e.altKey && (e.key === "n" || e.key === "N")) {
+        e.preventDefault();
+        startNewChat();
+      }
+      // Alt + T: Toggle Theme
+      if (e.altKey && (e.key === "t" || e.key === "T")) {
+        e.preventDefault();
+        const current = document.documentElement.getAttribute("data-theme");
+        setTheme(current === "dark" ? "light" : "dark");
+      }
+      // Esc: Close Lightbox or Sidebar
+      if (e.key === "Escape") {
+        if (lightboxModal.classList.contains("active")) {
+          closeLightbox();
+        } else if (!sidebar.classList.contains("-translate-x-full") && window.innerWidth < 1024) {
+          toggleSidebar(false);
+        }
+      }
+    });
+
+    /* ------------------------------------------------------------------------
+     * New Chat Session
+     * ---------------------------------------------------------------------- */
+    function startNewChat() {
+      if (confirm("Start a new chat session?")) {
+        userId = "web-user-" + Math.random().toString(36).slice(2, 8);
+        log.innerHTML = `
+          <div class="flex flex-col items-start gap-1 max-w-4xl mx-auto w-full">
+            <div class="flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 px-1">
+              <span class="text-brand-600 dark:text-brand-400 font-bold">🤖 AI News Comic</span>
+              <span class="px-1.5 py-0.2 rounded bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 text-[10px] font-bold">Issue #1</span>
+              <span>•</span>
+              <span>Today</span>
+            </div>
+            <div class="bg-white dark:bg-dark-bubble border border-slate-200/90 dark:border-dark-border shadow-sm rounded-2xl rounded-tl-sm p-4 sm:p-5 text-sm leading-relaxed text-slate-800 dark:text-slate-100 prose-bubble">
+              <p class="font-display font-bold text-base text-slate-900 dark:text-white mb-1">
+                New Session Started! ✨
+              </p>
+              <p>
+                Ask about today's AI releases, launches, or models to generate a fresh comic carousel!
+              </p>
+            </div>
+          </div>
+        `;
+        input.focus();
+      }
+    }
+    newChatBtn?.addEventListener("click", startNewChat);
+
+    /* ------------------------------------------------------------------------
+     * Lightbox Modal with Focus Trap & Escape Key
+     * ---------------------------------------------------------------------- */
+    let lastActiveElementBeforeLightbox = null;
+
+    function openLightbox(url, title) {
+      lastActiveElementBeforeLightbox = document.activeElement;
+      lightboxImg.src = url;
+      lightboxCaption.textContent = title || "Comic Artwork (1024×1024 HD)";
+      lightboxModal.classList.add("active");
+      lightboxClose.focus();
+    }
+
+    function closeLightbox() {
+      lightboxModal.classList.remove("active");
+      if (lastActiveElementBeforeLightbox) {
+        lastActiveElementBeforeLightbox.focus();
+      }
+    }
+
+    lightboxClose?.addEventListener("click", closeLightbox);
+    lightboxModal?.addEventListener("click", (e) => {
+      if (e.target === lightboxModal) closeLightbox();
+    });
+
+    /* ------------------------------------------------------------------------
+     * Clickable Prompt Chips
+     * ---------------------------------------------------------------------- */
+    document.querySelectorAll(".prompt-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const text = btn.getAttribute("data-prompt");
+        if (!text) return;
+        input.value = text;
+        if (window.innerWidth < 1024) toggleSidebar(false);
+        form.requestSubmit();
+      });
+    });
+
+    /* ------------------------------------------------------------------------
+     * DOM Helpers & Safe Markdown
+     * ---------------------------------------------------------------------- */
+    function el(tag, cls, text) {
+      const e = document.createElement(tag);
+      if (cls) e.className = cls;
+      if (text != null) e.textContent = text;
+      return e;
+    }
+
+    function formatTime() {
+      const d = new Date();
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    function parseMarkdown(md) {
+      if (!md) return "";
+      let html = escapeHtml(md);
+
+      // Headers
+      html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+      html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+
+      // Blockquotes
+      html = html.replace(/^\&gt; (.*$)/gim, '<blockquote>$1</blockquote>');
+
+      // Bold & Italic
+      html = html.replace(/\*\*\*(.*?)\*\*\*/gim, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/gim, '<em>$1</em>');
+
+      // Links
+      html = html.replace(/\[(.*?)\]\((https?:\/\/[^\)]+)\)/gim, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+      // Unordered Lists
+      html = html.replace(/^\s*[\-\*] (.*$)/gim, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>)/gim, '<ul>$1</ul>');
+      html = html.replace(/<\/ul>\s*<ul>/gim, '');
+
+      // Line breaks
+      html = html.replace(/\n\n+/g, '<p></p>');
+      html = html.replace(/\n/g, '<br>');
+
+      return html;
+    }
+
+    /* ------------------------------------------------------------------------
+     * Bubble Creation & Typing Indicator
+     * ---------------------------------------------------------------------- */
+    function createBubble(who) {
+      const container = el("div", "flex flex-col items-" + (who === "user" ? "end" : "start") + " gap-1 max-w-4xl mx-auto w-full");
+
+      const meta = el("div", "flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 px-1");
+      if (who === "user") {
+        meta.innerHTML = '<span class="font-bold text-slate-700 dark:text-slate-300">You</span><span>•</span><span>' + formatTime() + '</span>';
+      } else {
+        meta.innerHTML = '<span class="text-brand-600 dark:text-brand-400 font-bold">🤖 AI News Comic</span><span class="px-1.5 py-0.2 rounded bg-brand-100 dark:bg-brand-900/50 text-brand-700 dark:text-brand-300 text-[10px] font-bold">Issue #1</span><span>•</span><span>' + formatTime() + '</span>';
+      }
+      container.appendChild(meta);
+
+      const bubbleEl = el("div", who === "user"
+        ? "bg-brand-600 text-white rounded-2xl rounded-tr-sm p-4 sm:p-5 text-sm leading-relaxed shadow-md shadow-brand-600/10 max-w-[85%]"
+        : "bg-white dark:bg-dark-bubble border border-slate-200/90 dark:border-dark-border shadow-sm rounded-2xl rounded-tl-sm p-4 sm:p-5 text-sm leading-relaxed text-slate-800 dark:text-slate-100 prose-bubble w-full"
+      );
+      container.appendChild(bubbleEl);
+
+      log.appendChild(container);
+      log.scrollTop = log.scrollHeight;
+      return bubbleEl;
+    }
+
+    function showTyping() {
+      const container = el("div", "flex flex-col items-start gap-1 max-w-4xl mx-auto w-full");
+      container.id = "activeTyping";
+
+      const meta = el("div", "flex items-center gap-2 text-xs font-semibold text-slate-500 dark:text-slate-400 px-1");
+      meta.innerHTML = '<span class="text-brand-600 dark:text-brand-400 font-bold">🤖 AI News Comic</span><span>•</span><span>Illustrating…</span>';
+      container.appendChild(meta);
+
+      const bubbleEl = el("div", "bg-white dark:bg-dark-bubble border border-brand-200 dark:border-brand-900/60 shadow-comic rounded-2xl rounded-tl-sm p-3.5 flex items-center gap-3 text-xs font-semibold text-brand-600 dark:text-brand-400");
+      bubbleEl.innerHTML = `
+        <div class="flex gap-1.5 items-center">
+          <span class="w-2 h-2 rounded-full bg-brand-500 typing-dot"></span>
+          <span class="w-2 h-2 rounded-full bg-brand-500 typing-dot"></span>
+          <span class="w-2 h-2 rounded-full bg-brand-500 typing-dot"></span>
+        </div>
+        <span>Illustrating comic panels & compiling releases…</span>
+      `;
+      container.appendChild(bubbleEl);
+
+      log.appendChild(container);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function removeTyping() {
+      const t = document.getElementById("activeTyping");
+      if (t) t.remove();
+    }
+
+    /* ------------------------------------------------------------------------
+     * Multi-Panel Carousel Component Builder (Full-Card Visibility & High Responsiveness)
+     * ---------------------------------------------------------------------- */
+    function buildCarouselElement(slides) {
+      const wrapper = el("div", "relative w-full my-3");
+
+      // The Scroller Container with CSS Snap
+      const scroller = el("div", "carousel-scroller");
+      scroller.setAttribute("role", "region");
+      scroller.setAttribute("aria-label", "AI News Comic Carousel");
+      scroller.tabIndex = 0;
+
+      // Previous Arrow Button
+      const prevBtn = el("button", "absolute left-1 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-800 dark:text-slate-100 shadow-lg flex items-center justify-center text-lg z-20 hover:bg-brand-600 hover:text-white hover:border-brand-600 hover:scale-105 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-brand-500", "◀");
+      prevBtn.setAttribute("aria-label", "Previous comic slide");
+
+      // Next Arrow Button
+      const nextBtn = el("button", "absolute right-1 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border text-slate-800 dark:text-slate-100 shadow-lg flex items-center justify-center text-lg z-20 hover:bg-brand-600 hover:text-white hover:border-brand-600 hover:scale-105 active:scale-95 transition-all focus-visible:ring-2 focus-visible:ring-brand-500", "➔");
+      nextBtn.setAttribute("aria-label", "Next comic slide");
+
+      // Pagination Dots Container
+      const dotsContainer = el("div", "flex justify-center items-center gap-2 mt-2");
+      const dots = [];
+
+      slides.forEach((slide, idx) => {
+        // Dot indicator
+        const dot = el("button", "h-2 rounded-full transition-all focus-visible:ring-2 focus-visible:ring-brand-500 " + (idx === 0 ? "w-6 bg-brand-600" : "w-2 bg-slate-300 dark:bg-slate-700"));
+        dot.setAttribute("aria-label", "Go to slide " + (idx + 1));
+        dot.addEventListener("click", () => {
+          const targetSlide = scroller.children[idx];
+          if (targetSlide) targetSlide.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+        });
+        dots.push(dot);
+        dotsContainer.appendChild(dot);
+
+        // Slide Card Container
+        const card = el("div", "carousel-card bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border rounded-2xl shadow-md overflow-hidden");
+
+        // 1. Header
+        const header = el("div", "px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-dark-border flex items-center justify-between flex-shrink-0");
+        const badge = el("span", "text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-gradient-to-r from-brand-600 to-amber-500 text-white", "Slide " + (idx + 1) + " of " + slides.length);
+        const title = el("span", "text-xs font-bold text-slate-900 dark:text-slate-100 truncate max-w-[65%] text-right font-display", slide.title || "AI Release");
+        header.appendChild(badge);
+        header.appendChild(title);
+        card.appendChild(header);
+
+        // 2. Media Image Box (with Lightbox click)
+        if (slide.imageUrl) {
+          const mediaBox = el("div", "slide-media-box relative w-full h-[min(240px,34vh)] bg-black overflow-hidden flex-shrink-0 group");
+          const img = document.createElement("img");
+          img.src = slide.imageUrl;
+          img.alt = slide.title || "Comic Artwork Panel";
+          img.loading = "lazy";
+          img.className = "w-full h-full object-cover transition-transform duration-500 group-hover:scale-105";
+          mediaBox.appendChild(img);
+
+          const hint = el("span", "absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/70 backdrop-blur-sm text-[11px] font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1", "🔍 Zoom");
+          mediaBox.appendChild(hint);
+
+          mediaBox.addEventListener("click", () => openLightbox(slide.imageUrl, slide.title));
+          card.appendChild(mediaBox);
+        }
+
+        // 3. Body Text (Scrollable internally if lengthy)
+        if (slide.bodyText) {
+          const body = el("div", "p-4 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300 flex-1 overflow-y-auto prose-bubble space-y-1");
+          body.innerHTML = parseMarkdown(slide.bodyText);
+          card.appendChild(body);
+        }
+
+        // 4. Footer Metadata (Instagram-style pagination)
+        const footer = el("div", "px-4 py-2.5 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-dark-border flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium flex-shrink-0");
+        footer.innerHTML = `
+          <span>📅 Today</span>
+          <span class="font-bold text-brand-600 dark:text-brand-400">🤖 AI NEWS COMIC</span>
+          <span>Slide ${idx + 1}/${slides.length}</span>
+        `;
+        card.appendChild(footer);
+
+        scroller.appendChild(card);
+      });
+
+      wrapper.appendChild(scroller);
+      wrapper.appendChild(prevBtn);
+      wrapper.appendChild(nextBtn);
+      wrapper.appendChild(dotsContainer);
+
+      // Setup Scroller Interactions
+      setupScrollerInteractions(scroller, prevBtn, nextBtn, dots);
+      return wrapper;
+    }
+
+    function setupScrollerInteractions(scroller, prevBtn, nextBtn, dots) {
+      function getStep() {
+        const first = scroller.querySelector(".carousel-card");
+        return first ? (first.offsetWidth + 20) : 360;
+      }
+
+      prevBtn.addEventListener("click", () => scroller.scrollBy({ left: -getStep(), behavior: "smooth" }));
+      nextBtn.addEventListener("click", () => scroller.scrollBy({ left: getStep(), behavior: "smooth" }));
+
+      // Update active dot via IntersectionObserver
+      if ("IntersectionObserver" in window) {
+        const obs = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+              const idx = Array.from(scroller.children).indexOf(entry.target);
+              if (idx !== -1) {
+                dots.forEach((d, i) => {
+                  if (i === idx) {
+                    d.className = "h-2 w-6 rounded-full bg-brand-600 transition-all focus-visible:ring-2 focus-visible:ring-brand-500";
+                  } else {
+                    d.className = "h-2 w-2 rounded-full bg-slate-300 dark:bg-slate-700 transition-all focus-visible:ring-2 focus-visible:ring-brand-500";
+                  }
+                });
+              }
+            }
+          });
+        }, { root: scroller, threshold: 0.55 });
+
+        Array.from(scroller.children).forEach(c => obs.observe(c));
+      }
+
+      // Keyboard arrow navigation on carousel
+      scroller.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          scroller.scrollBy({ left: -getStep(), behavior: "smooth" });
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          scroller.scrollBy({ left: getStep(), behavior: "smooth" });
+        }
+      });
+    }
+
+    /* ------------------------------------------------------------------------
+     * Text Slide Extractor
+     * ---------------------------------------------------------------------- */
+    function extractComicSlides(text) {
+      const clean = text.replace(/<(?:a2ui-json|a2a_datapart_json)>[\s\S]*?<\/(?:a2ui-json|a2a_datapart_json)>/g, "").trim();
+      const chunks = clean.split(/\n\s*---\s*\n/).map(c => c.trim()).filter(Boolean);
+      const slides = [];
+      const leadingTexts = [];
+
+      for (const chunk of chunks) {
+        const imgMatch = chunk.match(/!\[(.*?)\]\((https?:\/\/[^\)]+)\)/);
+        const slideMatch = chunk.match(/###\s*(?:📸\s*)?\[(?:SLIDE\s*)?(\d+)\/(\d+)\]\s*(.*?)(?:\n|$)/i);
+
+        if (imgMatch || slideMatch) {
+          let title = "";
+          if (slideMatch) {
+            title = slideMatch[3].trim();
+          } else if (imgMatch && imgMatch[1]) {
+            title = imgMatch[1].trim();
+          }
+
+          let bodyText = chunk;
+          if (slideMatch) bodyText = bodyText.replace(slideMatch[0], "");
+          if (imgMatch) bodyText = bodyText.replace(imgMatch[0], "");
+          bodyText = bodyText.replace(/>\s*📅.*?(?:\n|$)/gi, "").trim();
+
+          slides.push({
+            title: title || ("Slide " + (slides.length + 1)),
+            imageUrl: imgMatch ? imgMatch[2] : null,
+            bodyText: bodyText.trim()
+          });
+        } else {
+          if (slides.length === 0) {
+            leadingTexts.push(chunk);
+          }
+        }
+      }
+
+      return {
+        isComicCarousel: slides.length >= 2,
+        slides: slides,
+        introText: leadingTexts.join("\n\n").trim()
+      };
+    }
+
+    /* ------------------------------------------------------------------------
+     * A2UI Surface Renderer (Basic Catalog v0.8)
+     * ---------------------------------------------------------------------- */
+    function boundStr(prop) {
+      if (prop == null) return "";
+      if (typeof prop === "string") return prop;
+      if (prop.literalString != null) return String(prop.literalString);
+      return "";
+    }
+
+    function buildA2uiNode(id, comps, visited) {
+      if (!id || visited.has(id)) return null;
+      visited.add(id);
+      const spec = comps[id];
+      if (!spec) return null;
+      const kind = Object.keys(spec)[0];
+      const props = spec[kind] || {};
+
+      switch (kind) {
+        case "Card": {
+          const node = el("div", "p-4 sm:p-5 rounded-2xl bg-white dark:bg-dark-card border border-slate-200 dark:border-dark-border shadow-sm my-2");
+          if (props.child) {
+            const c = buildA2uiNode(props.child, comps, visited);
+            if (c) node.appendChild(c);
+          }
+          return node;
+        }
+        case "Column": {
+          const node = el("div", "flex flex-col gap-2.5");
+          const kids = (props.children && props.children.explicitList) || [];
+          for (const k of kids) {
+            const c = buildA2uiNode(k, comps, visited);
+            if (c) node.appendChild(c);
+          }
+          return node;
+        }
+        case "Row": {
+          const node = el("div", "flex flex-wrap items-center gap-2.5");
+          const kids = (props.children && props.children.explicitList) || [];
+          for (const k of kids) {
+            const c = buildA2uiNode(k, comps, visited);
+            if (c) node.appendChild(c);
+          }
+          return node;
+        }
+        case "Text": {
+          const hint = props.usageHint || "body";
+          if (hint === "h1") return el("h1", "font-display font-bold text-base sm:text-lg text-slate-900 dark:text-white", boundStr(props.text));
+          if (hint === "h2") return el("h2", "font-display font-semibold text-sm sm:text-base text-slate-900 dark:text-white", boundStr(props.text));
+          return el("p", "text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed", boundStr(props.text));
+        }
+        case "Image": {
+          const url = boundStr(props.url);
+          if (/^https?:\/\//i.test(url)) {
+            const img = document.createElement("img");
+            img.className = "w-full rounded-xl object-cover my-2 max-h-72 cursor-zoom-in shadow-sm hover:scale-[1.01] transition-transform";
+            img.src = url;
+            img.alt = boundStr(props.altText) || "Comic Art";
+            img.loading = "lazy";
+            img.addEventListener("click", () => openLightbox(url, props.altText));
+            return img;
+          }
+          return null;
+        }
+        default:
+          return null;
+      }
+    }
+
+    function renderA2uiSurfaces(messages, container) {
+      const comps = {};
+      for (const m of messages) {
+        const su = m.surfaceUpdate;
+        if (su && Array.isArray(su.components)) {
+          for (const c of su.components) {
+            if (c && c.id && c.component) comps[c.id] = c.component;
+          }
+        }
+      }
+
+      let rootIds = [];
+      for (const m of messages) {
+        if (m.beginRendering && m.beginRendering.root) {
+          rootIds.push(m.beginRendering.root);
+        }
+      }
+
+      if (!rootIds.length) {
+        const referenced = new Set();
+        for (const id of Object.keys(comps)) {
+          const spec = comps[id];
+          if (spec.Card && spec.Card.child) referenced.add(spec.Card.child);
+          if (spec.Column && spec.Column.children && spec.Column.children.explicitList) {
+            spec.Column.children.explicitList.forEach(c => referenced.add(c));
+          }
+          if (spec.Row && spec.Row.children && spec.Row.children.explicitList) {
+            spec.Row.children.explicitList.forEach(c => referenced.add(c));
+          }
+        }
+        rootIds = Object.keys(comps).filter(id => !referenced.has(id));
+      }
+
+      let drew = false;
+      for (const rid of rootIds) {
+        const node = buildA2uiNode(rid, comps, new Set());
+        if (node) {
+          container.appendChild(node);
+          drew = true;
+        }
+      }
+      return drew;
+    }
+
+    /* ------------------------------------------------------------------------
+     * Render Agent Turn Reply
+     * ---------------------------------------------------------------------- */
+    function renderReply(bubbleEl, parts) {
+      bubbleEl.textContent = "";
+
+      const texts = parts.filter(p => p && (p.kind === "text" || (!p.kind && p.text))).map(p => p.text || "");
+      const a2ui = parts.filter(p => p && p.kind === "a2ui" && p.data).map(p => p.data);
+
+      const fullText = texts.join("\n\n").trim();
+      let hasComic = false;
+
+      if (fullText) {
+        const comicData = extractComicSlides(fullText);
+        if (comicData.isComicCarousel) {
+          hasComic = true;
+          if (comicData.introText) {
+            const introEl = el("div", "prose-bubble mb-2");
+            introEl.innerHTML = parseMarkdown(comicData.introText);
+            bubbleEl.appendChild(introEl);
+          }
+          const carouselEl = buildCarouselElement(comicData.slides);
+          bubbleEl.appendChild(carouselEl);
+        } else {
+          const textEl = el("div", "prose-bubble");
+          textEl.innerHTML = parseMarkdown(fullText);
+          bubbleEl.appendChild(textEl);
+        }
+      }
+
+      if (a2ui.length && !hasComic) {
+        const a2uiContainer = el("div", "w-full my-2");
+        if (renderA2uiSurfaces(a2ui, a2uiContainer)) {
+          bubbleEl.appendChild(a2uiContainer);
+        }
+      }
+
+      if (!bubbleEl.childNodes.length) {
+        bubbleEl.textContent = "(The agent completed the turn without returning text.)";
+      }
+
+      log.scrollTop = log.scrollHeight;
+    }
+
+    /* ------------------------------------------------------------------------
+     * Chat Form Submission
+     * ---------------------------------------------------------------------- */
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      // Render User Message
+      const userBubble = createBubble("user");
+      userBubble.textContent = text;
+      input.value = "";
+
+      // Show Typing Animation
+      showTyping();
+
+      try {
+        const res = await fetch("/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, user_id: userId })
+        });
+        const raw = await res.text();
+        removeTyping();
+
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          throw new Error("Server returned non-JSON response (HTTP " + res.status + "). " + raw.slice(0, 250));
+        }
+
+        const agentBubble = createBubble("agent");
+        renderReply(agentBubble, data.parts || []);
+      } catch (err) {
+        removeTyping();
+        const agentBubble = createBubble("agent");
+        agentBubble.textContent = "Error: " + err.message;
+      }
+    });
+  </script>
+</body>
+</html>
